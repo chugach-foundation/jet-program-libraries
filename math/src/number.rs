@@ -17,6 +17,7 @@ construct_uint! {
 }
 
 pub const BPS_EXPONENT: i32 = -4;
+pub const PERCENT_EXPONENT: i32 = -2;
 const PRECISION: i32 = 15;
 const ONE: U192 = U192([1_000_000_000_000_000, 0, 0]);
 const U64_MAX: U192 = U192([u64::MAX, 0x0, 0x0]);
@@ -24,7 +25,7 @@ const U64_MAX: U192 = U192([u64::MAX, 0x0, 0x0]);
 /// A large unsigned integer
 #[derive(Pod, Zeroable, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(transparent)]
-pub struct Number(U192);
+pub struct Number(pub U192);
 
 static_assertions::const_assert_eq!(24, std::mem::size_of::<Number>());
 static_assertions::const_assert_eq!(0, std::mem::size_of::<Number>() % 8);
@@ -123,6 +124,10 @@ impl Number {
         }
     }
 
+    pub fn from_percent(percent: u16) -> Number {
+        Number::from_decimal(percent, PERCENT_EXPONENT)
+    }
+
     /// Convert from basis points into a `Number`
     pub fn from_bps(basis_points: u16) -> Number {
         Number::from_decimal(basis_points, BPS_EXPONENT)
@@ -180,6 +185,10 @@ impl Number {
     /// returned by a call to `into_bits`.
     pub fn from_bits(bits: [u8; 24]) -> Self {
         Self(U192(unsafe { std::mem::transmute(bits) }))
+    }
+
+    pub fn from_bytes(bytes: [u8; 24]) -> Number {
+        Number(bytes.into())
     }
 }
 
